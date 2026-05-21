@@ -1,3 +1,6 @@
+// This code is all AI generated
+// Link to the AI conversation: https://claude.ai/share/09d8842f-a74d-4b06-8a81-d4d8f18ac9d1
+
 let temp = -27;
 const display = document.getElementById('display');
 const overlay = document.getElementById('modal-overlay');
