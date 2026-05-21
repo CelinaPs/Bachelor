@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHEM-LAB // ELEMENT SEQUENCE</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #050d1a;
+    --panel: #07142b;
+    --panel2: #0a1c38;
+    --accent: #00d4ff;
+    --accent2: #0077ff;
+    --accent3: #00ff88;
+    --danger: #ff4444;
+    --warn: #ffaa00;
+    --text: #c8e6ff;
+    --text-dim: #5a7fa0;
+    --border: rgba(0, 212, 255, 0.25);
+    --border-bright: rgba(0, 212, 255, 0.7);
+    --glow: 0 0 12px rgba(0, 212, 255, 0.4);
+    --glow-strong: 0 0 20px rgba(0, 212, 255, 0.7);
+  }
+
+  body {
+    font-family: 'Exo 2', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 119, 255, 0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 90%, rgba(0, 212, 255, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .container {
+    position: relative;
+    z-index: 2;
+    max-width: 100%;
+    margin: 0;
+    padding: 1.25rem 2rem;
+  }
+
+  /* HEADER */
+  .hud-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+    padding-bottom: 0.875rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.3rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-shadow: var(--glow);
+  }
+
+  .logo span { color: var(--text-dim); font-weight: 400; }
+
+  .hud-status {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent3);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  .blink { animation: blink 1.2s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* MAIN GAME AREA */
+  .game-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 700px) {
+    .game-grid { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.25rem 1.5rem;
+    position: relative;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.6;
+  }
+
+  .panel-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .panel-label::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: var(--glow);
+    flex-shrink: 0;
+  }
+
+  /* MOLECULE DISPLAY */
+  .molecule-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .molecule-img-wrapper {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .molecule-img-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(0, 212, 255, 0.04) 0%, transparent 70%);
+  }
+
+  #molCanvas {
+    width: 100% !important;
+    height: 380px !important;
+    border-radius: 4px;
+    display: block;
+  }
+
+  .molecule-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-shadow: var(--glow);
+    letter-spacing: 0.1em;
+  }
+
+  .molecule-hint {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* ANSWER DROP ZONE */
+  .answer-section { }
+
+  .drop-zone-wrapper {
+    margin-top: 0.5rem;
+  }
+
+  .formula-slots {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 90px;
+    background: var(--panel2);
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    padding: 1rem;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+
+  .formula-slots.drag-over {
+    border-color: var(--accent);
+    background: rgba(0, 212, 255, 0.05);
+    box-shadow: var(--glow);
+  }
+
+  .formula-slots.correct {
+    border-color: var(--accent3);
+    background: rgba(0, 255, 136, 0.05);
+  }
+
+  .formula-slots.wrong {
+    border-color: var(--danger);
+    background: rgba(255, 68, 68, 0.05);
+    animation: shake 0.3s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  .slot-placeholder {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .placed-token {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(0, 212, 255, 0.12);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.5rem 0.9rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--accent);
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+
+  .placed-token:hover {
+    background: rgba(255, 68, 68, 0.15);
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+
+  .placed-token .remove-hint {
+    font-size: 0.65rem;
+    opacity: 0.6;
+  }
+
+  /* FEEDBACK BAR */
+  .feedback-bar {
+    margin-top: 1rem;
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+  }
+
+  .feedback-icon {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .feedback-icon.ok { background: rgba(0,255,136,0.2); color: var(--accent3); }
+  .feedback-icon.err { background: rgba(255,68,68,0.2); color: var(--danger); }
+  .feedback-icon.idle { background: rgba(90,127,160,0.2); color: var(--text-dim); }
+
+  .feedback-text.ok { color: var(--accent3); }
+  .feedback-text.err { color: var(--danger); }
+  .feedback-text.idle { color: var(--text-dim); }
+
+  /* ELEMENTS BANK */
+  .bank-panel {
+    grid-column: 1 / -1;
+  }
+
+  .bank-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 0.5rem;
+  }
+
+  .token {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.6rem;
+    border-radius: 3px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.35rem;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.12s, box-shadow 0.12s, opacity 0.2s;
+    border: 1px solid;
+    position: relative;
+  }
+
+  .token:active { cursor: grabbing; transform: scale(0.96); }
+
+  .token.dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+
+  .token-c {
+    background: rgba(0, 119, 255, 0.12);
+    border-color: rgba(0, 119, 255, 0.5);
+    color: #60aaff;
+  }
+
+  .token-h {
+    background: rgba(200, 230, 255, 0.08);
+    border-color: rgba(200, 230, 255, 0.35);
+    color: var(--text);
+  }
+
+  .token-o {
+    background: rgba(255, 80, 80, 0.1);
+    border-color: rgba(255, 80, 80, 0.45);
+    color: #ff7070;
+  }
+
+  .token-n {
+    background: rgba(100, 200, 100, 0.1);
+    border-color: rgba(100, 200, 100, 0.45);
+    color: #70dd70;
+  }
+
+  .token-other {
+    background: rgba(255, 170, 0, 0.1);
+    border-color: rgba(255, 170, 0, 0.4);
+    color: var(--warn);
+  }
+
+  .token:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  /* SUBMIT */
+  .action-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.6rem 1.4rem;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all 0.15s;
+  }
+
+  .btn-check {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-check:hover {
+    background: rgba(0, 212, 255, 0.2);
+    box-shadow: var(--glow);
+  }
+
+  .btn-clear {
+    background: transparent;
+    border-color: var(--text-dim);
+    color: var(--text-dim);
+  }
+
+  .btn-clear:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+
+  /* WIN STATE */
+  .win-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(5, 13, 26, 0.92);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .win-overlay.active { display: flex; }
+
+  .win-box {
+    background: var(--panel);
+    border: 1px solid var(--accent3);
+    border-radius: 6px;
+    padding: 3rem 4rem;
+    text-align: center;
+    max-width: 500px;
+    box-shadow: 0 0 40px rgba(0, 255, 136, 0.2);
+    animation: fadeUp 0.4s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .win-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--accent3);
+    text-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+  }
+
+  .win-formula {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.4rem;
+    color: var(--accent);
+    margin: 1rem 0;
+    text-shadow: var(--glow);
+  }
+
+  .win-sub {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin-top: 0.5rem;
+  }
+
+  .btn-reset {
+    margin-top: 1.5rem;
+    background: rgba(0, 255, 136, 0.1);
+    border-color: var(--accent3);
+    color: var(--accent3);
+  }
+
+  .btn-reset:hover {
+    background: rgba(0, 255, 136, 0.2);
+    box-shadow: 0 0 14px rgba(0,255,136,0.3);
+  }
+
+  /* CORNER DECORATIONS */
+  .corner {
+    position: absolute;
+    width: 12px; height: 12px;
+    border-color: var(--border-bright);
+    border-style: solid;
+  }
+
+  .corner-tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+  .corner-tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+  .corner-bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+  .corner-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+  .attempts-display {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+  }
+
+  .attempts-display span {
+    color: var(--warn);
+  }
+
+  sub { font-size: 0.7em; }
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+
+<div class="container">
+
+  <header class="hud-header">
+    <div class="logo">CHEM<span>-</span>LAB <span>// ELEMENT SEQUENCE</span></div>
+    <div class="hud-status">
+      SYSTEM ONLINE <span class="blink">_</span><br>
+      PUZZLE MODULE v1.0<br>
+      IDENTIFY THE COMPOUND
+    </div>
+  </header>
+
+  <div class="game-grid">
+
+    <!-- MOLECULE DISPLAY PANEL -->
+    <div class="panel">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <div class="panel-label">Target compound — molecular scan</div>
+      <div class="molecule-display">
+        <div class="molecule-img-wrapper" style="padding: 0; overflow: hidden;">
+          <canvas id="molCanvas"></canvas>
+        </div>
+        <div class="molecule-name">Forumla</div>
+        <div class="molecule-hint">
+          Simple sugar<br>
+          Backbone of cellular energy metabolism
+        </div>
+      </div>
+    </div>
+
+    <!-- ANSWER CONSTRUCTION PANEL -->
+    <div class="panel">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <div class="panel-label">Formula construction zone</div>
+      <div class="answer-section">
+        <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.75rem; line-height:1.6;">
+            Construct the correct molecular formula. Click a placed element to remove it.
+        </p>
+
+        <div class="drop-zone-wrapper">
+          <div class="formula-slots" id="dropZone">
+            <span class="slot-placeholder" id="slotPlaceholder">No elements chosen</span>
+          </div>
+        </div>
+
+        <div class="feedback-bar" id="feedbackBar">
+          <div class="feedback-icon idle" id="feedbackIcon">?</div>
+          <span class="feedback-text idle" id="feedbackText">Awaiting input...</span>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-check" id="checkBtn">▶ VERIFY</button>
+          <button class="btn btn-clear" id="clearBtn">✕ CLEAR</button>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ELEMENT BANK PANEL -->
+    <div class="panel bank-panel">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+      <div class="panel-label">Element bank — drag tokens to the zone above</div>
+      <div class="bank-grid" id="tokenBank"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- WIN OVERLAY -->
+<div class="win-overlay" id="winOverlay">
+  <div class="win-box">
+    <div class="win-title">ACCESS GRANTED</div>
+    <div style="font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:var(--text-dim); margin-bottom:0.5rem; letter-spacing:0.1em;">COMPOUND IDENTIFIED</div>
+    <div class="win-formula">C₆H₁₂O₆</div>
+    <div class="win-sub">
+      <strong style="color:var(--text);">Glucose</strong> — a monosaccharide with 6 carbon atoms,<br>
+      12 hydrogens, and 6 oxygens.<br><br>
+      Molecular weight: 180.16 g/mol<br>
+      Primary energy source for living cells.
+    </div>
+  </div>
+</div>
+
+<script>
+const CORRECT_FORMULA = ['C6', 'H12', 'O6'];
+
+const ALL_TOKENS = [
+  { id: 'C6',  label: 'C\u2086',  raw: 'C6',  cls: 'token-c' },
+  { id: 'H12', label: 'H\u2081\u2082', raw: 'H12', cls: 'token-h' },
+  { id: 'O6',  label: 'O\u2086',  raw: 'O6',  cls: 'token-o' },
+  { id: 'C12', label: 'C\u2081\u2082', raw: 'C12', cls: 'token-c' },
+  { id: 'H2',  label: 'H\u2082',  raw: 'H2',  cls: 'token-h' },
+  { id: 'O2',  label: 'O\u2082',  raw: 'O2',  cls: 'token-o' },
+  { id: 'N2',  label: 'N\u2082',  raw: 'N2',  cls: 'token-n' },
+  { id: 'H6',  label: 'H\u2086',  raw: 'H6',  cls: 'token-h' },
+  { id: 'C3',  label: 'C\u2083',  raw: 'C3',  cls: 'token-c' },
+  { id: 'O3',  label: 'O\u2083',  raw: 'O3',  cls: 'token-o' },
+  { id: 'N4',  label: 'N\u2084',  raw: 'N4',  cls: 'token-n' },
+  { id: 'H4',  label: 'H\u2084',  raw: 'H4',  cls: 'token-h' },
+  { id: 'P4',  label: 'P\u2084',  raw: 'P4',  cls: 'token-other' },
+  { id: 'S2',  label: 'S\u2082',  raw: 'S2',  cls: 'token-other' },
+  { id: 'Cl2', label: 'Cl\u2082', raw: 'Cl2', cls: 'token-other' },
+  { id: 'C8',  label: 'C\u2088',  raw: 'C8',  cls: 'token-c' },
+  { id: 'H10', label: 'H\u2081\u2080', raw: 'H10', cls: 'token-h' },
+  { id: 'O4',  label: 'O\u2084',  raw: 'O4',  cls: 'token-o' },
+  { id: 'N6',  label: 'N\u2086',  raw: 'N6',  cls: 'token-n' },
+  { id: 'Fe3', label: 'Fe\u2083', raw: 'Fe3', cls: 'token-other' },
+];
+
+let placed = [];
+let attempts = 0;
+let draggedId = null;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function renderBank() {
+  const bank = document.getElementById('tokenBank');
+  bank.innerHTML = '';
+  shuffle(ALL_TOKENS).forEach(tok => {
+    const el = document.createElement('div');
+    el.className = `token ${tok.cls}`;
+    el.textContent = tok.label;
+    el.draggable = true;
+    el.dataset.id = tok.id;
+
+    // Mouse drag
+    el.addEventListener('dragstart', e => {
+      draggedId = tok.id;
+      setTimeout(() => el.classList.add('dragging'), 0);
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      draggedId = null;
+    });
+
+    // Touch drag
+    el.addEventListener('touchstart', e => handleTouchStart(e, tok.id), { passive: false });
+
+    bank.appendChild(el);
+  });
+}
+
+// Ghost element for touch drag
+let ghost = null;
+let touchDragId = null;
+
+function createGhost(label, cls, x, y) {
+  if (ghost) ghost.remove();
+  ghost = document.createElement('div');
+  ghost.className = `token ${cls}`;
+  ghost.textContent = label;
+  ghost.style.cssText = `
+    position: fixed; z-index: 9999; pointer-events: none;
+    opacity: 0.85; transform: scale(1.1) translate(-50%, -50%);
+    left: ${x}px; top: ${y}px;
+  `;
+  document.body.appendChild(ghost);
+}
+
+function moveGhost(x, y) {
+  if (ghost) { ghost.style.left = x + 'px'; ghost.style.top = y + 'px'; }
+}
+
+function removeGhost() {
+  if (ghost) { ghost.remove(); ghost = null; }
+}
+
+function isOverDropZone(x, y) {
+  const zone = document.getElementById('dropZone');
+  const rect = zone.getBoundingClientRect();
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+}
+
+function handleTouchStart(e, id) {
+  e.preventDefault();
+  touchDragId = id;
+  const tok = ALL_TOKENS.find(t => t.id === id);
+  const t = e.touches[0];
+  createGhost(tok.label, tok.cls, t.clientX, t.clientY);
+
+  function onMove(ev) {
+    ev.preventDefault();
+    const touch = ev.touches[0];
+    moveGhost(touch.clientX, touch.clientY);
+    const zone = document.getElementById('dropZone');
+    if (isOverDropZone(touch.clientX, touch.clientY)) {
+      zone.classList.add('drag-over');
+    } else {
+      zone.classList.remove('drag-over');
+    }
+  }
+
+  function onEnd(ev) {
+    removeGhost();
+    const zone = document.getElementById('dropZone');
+    zone.classList.remove('drag-over');
+    const t2 = ev.changedTouches[0];
+    if (isOverDropZone(t2.clientX, t2.clientY) && touchDragId) {
+      placed.push(touchDragId);
+      zone.classList.remove('correct', 'wrong');
+      setFeedback('idle', '?', 'Awaiting input...');
+      renderDropZone();
+    }
+    touchDragId = null;
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onEnd);
+  }
+
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('touchend', onEnd);
+}
+
+function renderDropZone() {
+  const zone = document.getElementById('dropZone');
+  const placeholder = document.getElementById('slotPlaceholder');
+
+  const existing = zone.querySelectorAll('.placed-token');
+  existing.forEach(e => e.remove());
+
+  if (placed.length === 0) {
+    placeholder.style.display = '';
+  } else {
+    placeholder.style.display = 'none';
+    placed.forEach((id, idx) => {
+      const tok = ALL_TOKENS.find(t => t.id === id);
+      const el = document.createElement('div');
+      el.className = 'placed-token';
+      el.innerHTML = `${tok.label} <span class="remove-hint">✕</span>`;
+      el.addEventListener('click', () => {
+        placed.splice(idx, 1);
+        renderDropZone();
+        setFeedback('idle', '?', 'Awaiting input...');
+        zone.classList.remove('correct', 'wrong');
+      });
+      zone.appendChild(el);
+    });
+  }
+}
+
+function setFeedback(type, icon, text) {
+  const fi = document.getElementById('feedbackIcon');
+  const ft = document.getElementById('feedbackText');
+  fi.className = `feedback-icon ${type}`;
+  fi.textContent = icon;
+  ft.className = `feedback-text ${type}`;
+  ft.textContent = text;
+}
+
+function checkAnswer() {
+  if (placed.length === 0) {
+    setFeedback('err', '!', 'No elements placed — drag tokens to the zone first.');
+    return;
+  }
+
+  attempts++;
+
+  const zone = document.getElementById('dropZone');
+  zone.classList.remove('correct', 'wrong');
+
+  const sorted_placed = [...placed].sort().join(',');
+  const sorted_correct = [...CORRECT_FORMULA].sort().join(',');
+
+  if (sorted_placed === sorted_correct) {
+    zone.classList.add('correct');
+    setFeedback('ok', '✓', 'CORRECT — molecular formula verified! Access granted.');
+    setTimeout(() => {
+      document.getElementById('winOverlay').classList.add('active');
+    }, 600);
+  } else {
+    zone.classList.add('wrong');
+    void zone.offsetWidth;
+
+    if (placed.length < CORRECT_FORMULA.length) {
+      setFeedback('err', '✗', `Incomplete formula — ${CORRECT_FORMULA.length} components required, you have ${placed.length}.`);
+    } else if (placed.length > CORRECT_FORMULA.length) {
+      setFeedback('err', '✗', `Too many components — expected ${CORRECT_FORMULA.length}, got ${placed.length}.`);
+    } else {
+      setFeedback('err', '✗', 'Incorrect combination — review atom counts and try again.');
+    }
+  }
+}
+
+function resetGame() {
+  placed = [];
+  document.getElementById('dropZone').classList.remove('correct', 'wrong');
+  document.getElementById('winOverlay').classList.remove('active');
+  setFeedback('idle', '?', 'Awaiting input...');
+  renderDropZone();
+  renderBank();
+}
+
+// Drop zone events
+const dropZone = document.getElementById('dropZone');
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('drag-over');
+});
+
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  if (!draggedId) return;
+  placed.push(draggedId);
+  dropZone.classList.remove('correct', 'wrong');
+  setFeedback('idle', '?', 'Awaiting input...');
+  renderDropZone();
+});
+
+document.getElementById('checkBtn').addEventListener('click', checkAnswer);
+document.getElementById('clearBtn').addEventListener('click', () => {
+  placed = [];
+  dropZone.classList.remove('correct', 'wrong');
+  setFeedback('idle', '?', 'Awaiting input...');
+  renderDropZone();
+});
+
+renderBank();
+renderDropZone();
+</script>
+<script src="three.min.js"></script><script>
+(function() {
+  const canvas = document.getElementById('molCanvas');
+  const wrapper = canvas.parentElement;
+
+  const W = wrapper.clientWidth || 400;
+  const H = 380;
+  canvas.width = W;
+  canvas.height = H;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setClearColor(0x0a1c38, 1);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
+  camera.position.set(0, 0, 9);
+
+  // Lighting
+  const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+  scene.add(ambient);
+  const dir1 = new THREE.DirectionalLight(0x88ccff, 1.0);
+  dir1.position.set(5, 8, 6);
+  scene.add(dir1);
+  const dir2 = new THREE.DirectionalLight(0x004488, 0.5);
+  dir2.position.set(-5, -4, -3);
+  scene.add(dir2);
+  const point = new THREE.PointLight(0x00d4ff, 0.6, 20);
+  point.position.set(0, 3, 5);
+  scene.add(point);
+
+  // Glucose open-chain atom positions (scaled, centered)
+  // C1-C6 backbone + oxygens + hydrogens (simplified but structurally representative)
+  const atoms = [
+    // Carbon backbone
+    { pos: [-2.4,  0.3,  0.2], type: 'C' },  // C1
+    { pos: [-1.2,  0.8, -0.3], type: 'C' },  // C2
+    { pos: [ 0.0,  0.2,  0.4], type: 'C' },  // C3
+    { pos: [ 1.2,  0.8, -0.2], type: 'C' },  // C4
+    { pos: [ 2.4,  0.2,  0.3], type: 'C' },  // C5
+    { pos: [ 3.2, -0.8, -0.2], type: 'C' },  // C6 (CH2OH)
+
+    // Oxygens (OH groups)
+    { pos: [-2.8,  1.4,  0.9], type: 'O' },  // O on C1 (aldehyde)
+    { pos: [-1.0,  2.1,  0.2], type: 'O' },  // OH on C2
+    { pos: [ 0.2, -1.1,  0.0], type: 'O' },  // OH on C3
+    { pos: [ 1.4,  2.0, -0.5], type: 'O' },  // OH on C4
+    { pos: [ 2.8,  1.4,  0.8], type: 'O' },  // O on C5 ring-like
+    { pos: [ 4.2, -0.4, -0.6], type: 'O' },  // O on C6
+
+    // Hydrogens (selected key ones)
+    { pos: [-3.2, -0.4,  0.1], type: 'H' },  // H on C1
+    { pos: [-1.4,  0.6, -1.4], type: 'H' },  // H on C2
+    { pos: [ 0.0,  0.2,  1.5], type: 'H' },  // H on C3
+    { pos: [ 1.2,  0.8, -1.3], type: 'H' },  // H on C4
+    { pos: [ 2.4, -0.9,  0.5], type: 'H' },  // H on C5
+    { pos: [ 3.0, -1.7,  0.4], type: 'H' },  // H on C6a
+    { pos: [ 3.6, -0.9, -1.2], type: 'H' },  // H on C6b
+  ];
+
+  const bonds = [
+    [0,1],[1,2],[2,3],[3,4],[4,5],  // C-C backbone
+    [0,6],                           // C1=O aldehyde
+    [1,7],[2,8],[3,9],[4,10],[5,11], // C-OH
+    [0,12],[1,13],[2,14],[3,15],[4,16],[5,17],[5,18], // C-H
+  ];
+
+  const colors = { C: 0x444466, H: 0xddeeff, O: 0xdd3333 };
+  const radii  = { C: 0.28, H: 0.18, O: 0.26 };
+
+  const molGroup = new THREE.Group();
+
+  // Create atoms
+  atoms.forEach(a => {
+    const geo = new THREE.SphereGeometry(radii[a.type], 20, 20);
+    const mat = new THREE.MeshPhongMaterial({
+      color: colors[a.type],
+      shininess: 90,
+      specular: new THREE.Color(0x448899),
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(...a.pos);
+    molGroup.add(mesh);
+  });
+
+  // Create bonds as cylinders
+  const bondMat = new THREE.MeshPhongMaterial({ color: 0x336688, shininess: 40 });
+
+  bonds.forEach(([i, j]) => {
+    const a = new THREE.Vector3(...atoms[i].pos);
+    const b = new THREE.Vector3(...atoms[j].pos);
+    const dir = new THREE.Vector3().subVectors(b, a);
+    const len = dir.length();
+    const mid = new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5);
+
+    const geo = new THREE.CylinderGeometry(0.06, 0.06, len, 8);
+    const mesh = new THREE.Mesh(geo, bondMat);
+    mesh.position.copy(mid);
+    mesh.quaternion.setFromUnitVectors(
+      new THREE.Vector3(0, 1, 0),
+      dir.normalize()
+    );
+    molGroup.add(mesh);
+  });
+
+  // Center the group
+  const box = new THREE.Box3().setFromObject(molGroup);
+  const center = box.getCenter(new THREE.Vector3());
+  molGroup.position.sub(center);
+
+  scene.add(molGroup);
+
+  // Resize
+  window.addEventListener('resize', () => {
+    const w = wrapper.clientWidth;
+    renderer.setSize(w, 380);
+    camera.aspect = w / 380;
+    camera.updateProjectionMatrix();
+  });
+
+  // Animate — steady Y-axis rotation only
+  function animate() {
+    requestAnimationFrame(animate);
+    molGroup.rotation.y += 0.005;
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>
