@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature Control Gauge</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+<div class="scifi-wrap">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <span class="hud-item active">STA-7 // Vega Station</span>
+      <span class="hud-item">Sector: 4-G</span>
+      <span class="hud-item ok">Hull: 98%</span>
+      <span class="hud-item warn">Pressure: Low</span>
+    </div>
+    <div class="top-bar-center">Environmental Control System</div>
+    <div class="top-bar-right">
+      <span class="hud-item">O2: 21.4%</span>
+      <span class="hud-item active">Shields: Active</span>
+      <span class="hud-item">Crew: 4</span>
+      <span class="hud-item">ETA: 04:27:11</span>
+    </div>
+  </div>
+
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar-left">
+    <div class="sidebar-dot active"></div>
+    <span class="sidebar-text bright">Nav // Autopilot engaged</span>
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-text">Thruster output: 74%</span>
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-text bright">Reactor: Online</span>
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-text">Coolant flow: nominal</span>
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-text">Airlock: Sealed</span>
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-text bright">Comms: Open</span>
+    <div class="sidebar-dot"></div>
+  </div>
+
+  <!-- MAIN CENTER -->
+  <div class="main-center">
+    <div class="hud-row">
+      <span class="hud-item active">Unit 03</span>
+      <span class="hud-item">Subsystem: Climate</span>
+      <span class="hud-item warn">Alert: Temp. anomaly</span>
+    </div>
+
+    <div class="screen-frame">
+      <div class="scan-line"></div>
+      <div class="screen-header">
+        <div class="screen-dot active"></div>
+        <div class="screen-dot"></div>
+        <div class="screen-dot"></div>
+        <span class="screen-label-header">Unit 03 — Environmental Control</span>
+      </div>
+      <div class="screen-body">
+        <p class="room-label">Room temperature currently is</p>
+        <p id="display">-27</p>
+        <p class="temp-unit">°C</p>
+        <hr class="divider">
+        <p class="formula-label">Correct room temperature</p>
+        <h2 id="math">(5x5-3)x2-14 = ? °C</h2>
+        <div class="status-row">
+          <div class="status-dot"></div>
+          <span class="status-text">Awaiting input</span>
+        </div>
+      </div>
+      <div class="screen-footer">
+        <span class="footer-item">O2: 21.4%</span>
+        <span class="footer-item warn">Pressure: Low</span>
+        <span class="footer-item">Reactor: Online</span>
+        <span class="footer-item">Airlock: Sealed</span>
+        <span class="footer-item">Node: ENV-03</span>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button id="hot" onclick="changeTemp(10)">+10°C &nbsp; Hot</button>
+      <button id="cold" onclick="changeTemp(-1)">−1°C &nbsp; Cold</button>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="sidebar-right">
+    <div class="sidebar-dot active"></div>
+    <span class="sidebar-text bright">Thermal reg: Active</span>
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-text">Life support: Stable</span>
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-text bright">Power grid: 91%</span>
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-text">Sensor array: Online</span>
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-text">Orbit decay: None</span>
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-text bright">Docking: Disengaged</span>
+    <div class="sidebar-dot"></div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottom-bar">
+    <span class="hud-item">Stardate: 2347.11.09</span>
+    <span class="hud-item active">Mission: Thermal Stabilisation</span>
+    <span class="hud-item">Velocity: 0.003c</span>
+    <span class="hud-item warn">Warning: Env. instability detected</span>
+    <span class="hud-item">Beacon: Broadcasting</span>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal-overlay">
+  <div class="modal">
+    <p class="modal-tag">[ System unlocked ]</p>
+    <h2>Correct temperature reached</h2>
+    <p>The system has unlocked. You may proceed.</p>
+  </div>
+</div>
+
+</body>
+</html>
