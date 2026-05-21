@@ -1,0 +1,59 @@
+// 2: ..---
+function num2 () {
+    dot()
+    dot()
+    dash()
+    dash()
+    dash()
+    letterGap()
+}
+function letterGap () {
+    basic.pause(400)
+}
+function dash () {
+    pins.digitalWritePin(DigitalPin.P0, 1)
+    music.playTone(880, 600)
+    pins.digitalWritePin(DigitalPin.P0, 0)
+    basic.pause(100)
+}
+// 7: --...
+function num7 () {
+    dash()
+    dash()
+    dot()
+    dot()
+    dot()
+    letterGap()
+}
+function dot () {
+    pins.digitalWritePin(DigitalPin.P0, 1)
+    music.playTone(880, 200)
+    pins.digitalWritePin(DigitalPin.P0, 0)
+    basic.pause(100)
+}
+// 5: .....
+function num5 () {
+    dot()
+    dot()
+    dot()
+    dot()
+    dot()
+    letterGap()
+}
+// 9: ----.
+function num9 () {
+    dash()
+    dash()
+    dash()
+    dash()
+    dot()
+    letterGap()
+}
+pins.analogSetPitchPin(AnalogPin.P2)
+basic.forever(function () {
+    num7()
+    num2()
+    num5()
+    num9()
+    basic.pause(3000)
+})
